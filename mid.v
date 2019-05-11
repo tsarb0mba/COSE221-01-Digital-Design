@@ -3,7 +3,7 @@ reg in1;
 reg [3:0] in2, in3,in4,in5;
 wire [3:0] com4,com5;//complement of in4,in5
 wire [3:0] bit1,bit2;//to save the temporary value
-wire [3:0] cbit1,cbit2;//make the bit1,bit2 to a bcd value
+wire [3:0] cbit1,cbit2;//make the bit1,bit2 to a BCD value
 wire car_1,car_2;//temporary carry
 wire ccar_1,ccar_2;//changed temporary carry
 reg car_0;
