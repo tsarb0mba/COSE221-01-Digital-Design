@@ -1,0 +1,93 @@
+module term2(input [4:0]SW, input CLOCK_50, output reg [0:6] HEX3,HEX1,HEX0);
+	
+	reg [2:0] curState;
+	wire [2:0] NextState;
+	reg [2:0] inPut;
+	wire [1:0] num;
+	wire newclock;
+
+	//to show integer in HEX
+	parameter seg9 = 7'b000_1100; parameter seg8 = 7'b000_0000; parameter seg7 = 7'b000_1111; parameter seg6 = 7'b010_0000; parameter seg5 = 7'b010_0100;
+	parameter seg4 = 7'b100_1100; parameter seg3 = 7'b000_0110; parameter seg2 = 7'b001_0010; parameter seg1 = 7'b100_1111; parameter seg0 = 7'b000_0001;
+	parameter segvoid=7'b111_1111;
+	//pulGen(inNum, CLOCK_50, SW[3], SW[4] SW0);
+	//pulGen(input in, clk, rst, output out), output can be 1or0
+	nnext n(inPut, curState, newclock, SW[3], SW[4], NextState);
+	nnum nu(curState, num);
+	clock nc(CLOCK_50,newclock);
+	
+	always@(*)
+	begin
+		if(SW[0]) inPut=2'b01;
+		else if(SW[1]) inPut=2'b10;
+		else if(SW[2]) inPut=2'b11;
+		else inPut=2'b00;
+		end
+
+
+
+	always@(posedge CLOCK_50) //currentstate show
+	begin
+		curState = NextState;
+		case(curState)
+		4'b000: begin HEX1=seg0; HEX0=seg0;end
+		4'b001: begin HEX1=seg0; HEX0=seg4;end
+		4'b010: begin HEX1=seg0; HEX0=seg8;end
+		4'b011: begin HEX1=seg1; HEX0=seg2;end
+		4'b100: begin HEX1=seg1; HEX0=seg6;end
+		4'b101: begin HEX1=seg2; HEX0=seg0;end
+		//default : begin HEX0=seg0; HEX1=seg0; end
+	endcase
+	end
+	
+	always@(posedge CLOCK_50)
+	begin
+	case(num)
+		2'b00:HEX3=seg0;
+		2'b01:HEX3=seg1;
+		2'b10:HEX3=seg2;
+	endcase
+	end
+
+endmodule
+
+module nnext(input[1:0] in, input [2:0]current, input clk, input go, input rst, output reg [2:0] next);
+	//pulGen(inNum, currentstate, CLOCK_50, SW[3], SW[4], nextstate);
+
+	
+	always @(posedge clk)//State Change
+	begin
+	if(rst)
+		begin
+		next=3'b000;
+		end
+	else if(go)
+		begin
+		next[2]=1'b0;
+		next[1]=current[2];
+		next[0]=current[0];
+		end
+	else
+		begin
+			next[2]=current[2]|(current[1]&(~current[0])&in[1])|(current[1]&in[1]&(~in[0]))|((~current[1])&current[0]&in[1]&in[0])|(current[1]&current[0]&(~in[1])&(in[0]));
+			next[1]=(current[1]&(~current[0])&(~in[1]))|(current[1]&(~in[1])&(~in[0]))|((~current[2])&(~current[1])&(~current[0])&in[1])|((~current[2])&(~current[1])&in[1]&(~in[0]))|(current[1]&current[0]&in[1]&in[0])|((~current[2])&(~current[1])&current[0]&(~in[1])&in[0]);
+			next[0]=(current[0]&(~in[0]))|(current[2]&current[0])|((~current[2])&(~current[0])&in[0])|((~current[0])&(~in[1])&in[0])|(current[1]&in[1]&in[0]);
+		end
+	end
+	
+endmodule 
+
+module nnum(input [2:0]cur, output wire [1:0] num );
+	assign num[1]=cur[2];
+	assign num[0]=cur[1];
+endmodule
+
+module clock(input clk, output newclk);
+	reg [24:0]cnt;
+	
+	always@(posedge clk) 
+	begin
+		cnt <= cnt + 1'b1;
+	end
+	assign newclk = cnt[24];
+endmodule
